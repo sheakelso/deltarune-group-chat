@@ -38,8 +38,10 @@
 
     let currentFaceSprite = $state();
 
+    let storedMessages: ClientMessage[] = [];
+
     onMount(() => {
-        createMessageBox(fakeMessage);
+        createMessageBox(fakeMessage, true);
         console.log(data);
         if(!data.loggedIn) document.location.href = "/login";
         createChatSocket();
@@ -67,14 +69,17 @@
         socketGetMessages(true, 10, 0);
 
         socket.on("newMessage", (message)=>{
-            createMessageBox(message);
+            createMessageBox(message, true);
         })
     }
 
     function socketGetMessages(recent: boolean, count: number, lastId: number | undefined){
         socket.emit("getMessages", {recent: true, count: 10}, (messages: ClientMessage[])=>{
             for(let i = messages.length - 1; i >= 0; i--){
-                createMessageBox(messages[i]);
+                let lastMessage = storedMessages.length > 0 ? storedMessages[storedMessages.length - 1] : undefined;
+                let includeInfo = lastMessage?.user.publicId != messages[i].user.publicId;
+                storedMessages.push(messages[i]);
+                createMessageBox(messages[i], includeInfo);
             }
         });
     }
@@ -85,11 +90,12 @@
         })
     }
 
-    function createMessageBox(message: ClientMessage){
+    function createMessageBox(message: ClientMessage, includeInfo: boolean){
         mount(DeltaruneChatMessage, {
             target: chatContainer,
             props: {
-                message: message
+                message: message,
+                includeInfo: includeInfo
             }
         })
     }
@@ -189,7 +195,6 @@
         padding: 25px;
         display: flex;
         flex-direction: column;
-        gap: 25px;
         overflow-y: scroll;
     }
 

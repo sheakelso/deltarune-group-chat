@@ -1,26 +1,46 @@
 <script lang="ts">
     import DeltaruneBtn from "$lib/deltarune-btn.svelte";
+    import { onMount } from "svelte";
 
     let emailInput: HTMLInputElement;
     let usernameInput: HTMLInputElement;
     let passwordInput: HTMLInputElement;
+
+    let success = $state(false);
+
+    onMount(() => {
+        // @ts-ignore
+        window.onTurnstileSuccess = onTurnstileSuccess;
+    });
+
+    let turnstileToken: string;
 
     async function onClick() {
         const email = emailInput.value;
         const username = usernameInput.value;
         const password = passwordInput.value;
 
-        let response = await fetch("http://localhost:3000/api/register", {
+        let response = await fetch("/api/register", {
             method: "POST",
             body: JSON.stringify({
                 email: email,
                 username: username,
                 password: password,
+                token: turnstileToken
             }),
         });
 
-        if (!response.ok) return;
-        console.log(response.body);
+        if (!response.ok) error((await response.json()).message);
+        else success = true;
+    }
+
+    function onTurnstileSuccess(token: string){
+        turnstileToken = token;
+    }
+
+    function error(message: string){
+        let errorElement = document.getElementById("error");
+        if(errorElement) errorElement.innerText = message;
     }
 </script>
 
@@ -28,7 +48,11 @@
 
 <div class="center-vertical">
     <div class="center-horizontal">
+        {#if success}
+            <p>Account created successfully. Please check your email to verify your account.</p>
+        {:else}
         <form method="POST">
+            <p id="error"></p>
             <div class="form-grid">
                 <label for="email">Email:</label>
                 <input
@@ -54,7 +78,10 @@
             </div>
         </form>
         <br>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAECZvoqG5KN7fEpB" data-size="normal" data-callback="onTurnstileSuccess"></div>
+        <br>
         <DeltaruneBtn text="Register" {onClick}></DeltaruneBtn>
+        {/if}
     </div>
 </div>
 
@@ -81,6 +108,11 @@
         grid-template-columns: repeat(2, min-content);
         justify-content: center;
         column-gap: 20px;
+    }
+
+    #error {
+        text-align: center;
+        color: red;
     }
 
     label {

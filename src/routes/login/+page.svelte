@@ -1,8 +1,15 @@
 <script lang="ts">
     import DeltaruneBtn from "$lib/deltarune-btn.svelte";
+    import { onMount } from "svelte";
 
     let emailInput: HTMLInputElement;
     let passwordInput: HTMLInputElement;
+    let turnstileToken: string;
+
+    onMount(() => {
+        // @ts-ignore
+        window.onTurnstileSuccess = onTurnstileSuccess;
+    })
 
     async function onClick() {
         const email = emailInput.value;
@@ -13,15 +20,30 @@
             body: JSON.stringify({
                 email: email,
                 password: password,
+                token: turnstileToken
             }),
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+            let data = await response.json();
+            error(data.message);
+        }
         else document.location.href = "/";
+    }
+
+    function onTurnstileSuccess(token: string){
+        console.log("TOKEN: " + token)
+        turnstileToken = token;
+    }
+
+    function error(message: string){
+        let errorElement = document.getElementById("error");
+        if(errorElement) errorElement.innerText = message;
     }
 </script>
 
 <div class="center-vertical">
+    <p id="error"></p>
     <div class="center-horizontal">
         <form method="POST" class="center-horizontal">
             <div class="form-grid">
@@ -42,9 +64,11 @@
             </div>
         </form>
 
+        <br/>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAECZvoqG5KN7fEpB" data-size="normal" data-callback="onTurnstileSuccess"></div>
         <br />
 
-        <DeltaruneBtn text="Login" {onClick}></DeltaruneBtn>
+        <DeltaruneBtn text="Login" onClick={onClick}></DeltaruneBtn>
     </div>
 </div>
 
@@ -71,6 +95,11 @@
         grid-template-columns: repeat(2, min-content);
         justify-content: center;
         column-gap: 20px;
+    }
+
+    #error {
+        text-align: center;
+        color: red;
     }
 
     label {

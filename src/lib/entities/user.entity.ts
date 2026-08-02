@@ -7,7 +7,8 @@ export const UserSchema = defineEntity({
     username: p.string().length(20),
     email: p.string().length(320),
     passwordHash: p.string().length(255),
-    publicId: p.uuid()
+    publicId: p.uuid(),
+    emailVerificationStatus: p.enum(['Verified', 'Unverified']).default('Unverified')
   },
 });
 

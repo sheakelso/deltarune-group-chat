@@ -5,6 +5,7 @@ import { Server, Socket } from "socket.io";
 import { orm } from "./src/lib/db.ts";
 import { UserSchema } from "./src/lib/entities/user.entity.ts";
 import { Message, MessageSchema } from "./src/lib/entities/message.entity.ts";
+import { MessageReport } from "./src/lib/entities/messageReport.entity.ts";
 import { handler } from "./build/handler.js"
 import cors from "cors";
 import { getSessionUser } from "./src/lib/sessions.ts"
@@ -20,7 +21,7 @@ initChatServer();
 app.use(cors());
 app.use(handler);
 
-server.listen(3000);
+server.listen(80);
 
 
 function initChatServer() {
@@ -31,8 +32,9 @@ function initChatServer() {
 
 function onSocketConnected(socket: Socket){
     socket.on("auth", async (value, callback) => {
-        socket.data = await getSessionUser(value);
-        if(socket.data != undefined){
+        let user = await getSessionUser(value);
+        socket.data = user;
+        if(user != undefined){
             onSocketAuthorized(socket);
             callback(true);
         }
@@ -50,7 +52,7 @@ function onSocketAuthorized(socket: Socket){
             messages = await em.findAll(Message, {orderBy: {id: "DESC"}, limit: value.count, populate: ['faceSprite', 'user']});
         }
         else{
-            messages = await em.find(Message, {id: {$lte: value.lastId}}, {orderBy: {id: "DESC"}, limit: value.count, populate: ['faceSprite', 'user']});
+            messages = await em.find(Message, {id: {$lt: value.lastId}}, {orderBy: {id: "DESC"}, limit: value.count, populate: ['faceSprite', 'user']});
         }
         callback(messages);
     });
@@ -69,11 +71,32 @@ function onSocketAuthorized(socket: Socket){
             });
             await em.flush();
 
-            await em.populate(message, ["faceSprite"]);
+            await em.populate(message, ["faceSprite", "user"]);
 
-            io.in("chat").emit("newMessage", message);
+            let clientMessage: ClientMessage = message;
+
+            io.in("chat").emit("newMessage", clientMessage);
             callback(true);
         }
         else callback(false);
+    });
+
+    socket.on("reportMessage", async (value) => {
+        let em = orm.em.fork();
+        await em.create(MessageReport, {
+            message: value,
+            reportingUser: socket.data.id
+        });
+        await em.flush();
+    });
+
+    socket.on("deleteMessage", async (value) => {
+        let em = orm.em.fork();
+        let message = await em.findOne(Message, {id: value});
+        if(message != undefined) {
+            await em.remove(message);
+            await em.flush();
+        }
+        io.in("chat").emit("deleteMessage", value);
     });
 }

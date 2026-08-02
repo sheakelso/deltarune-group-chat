@@ -1,15 +1,18 @@
 import type { Actions } from "@sveltejs/kit";
 import { error, json } from "@sveltejs/kit";
-import { orm } from "$lib/db";
+import { orm, transporter } from "$lib/db";
 import { UserSchema } from "$lib/entities/user.entity";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateJwtToken } from "$lib/tokens";
-import type { RequestEvent } from "../api/$types";
+import type { RequestEvent } from "./$types";
 import { v4 } from "uuid";
 
 export const actions = {
     default: async (event) => {
+        
+
+
         let data = await event.request.formData();
 
         let email = data.get("email")?.toString();

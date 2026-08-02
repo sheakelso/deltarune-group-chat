@@ -34,11 +34,11 @@
 </style>
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import DeltaruneBtn from "$lib/deltarune-btn.svelte";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
-    console.log(data);
 
     function onLogoHover(){
         const logo = document.querySelector('.home-logo') as HTMLImageElement;
@@ -62,8 +62,10 @@
         document.location.href = '/register';
     }
 
-    function handleLogoutClick(){
-        cookieStore.delete("sid");
+    async function handleLogoutClick(){
+        await fetch('/api/logout', {
+            method: "POST"
+        });
         document.location.reload();
     }
 </script>

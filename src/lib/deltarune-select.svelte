@@ -9,6 +9,7 @@
         font-family: 'dtm';
         background: none;
         border: none;
+        outline: none;
         color: white;
     }
 

@@ -4,6 +4,7 @@ import type { FaceSprite } from "$lib/entities/faceSprite.entity";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async () => {
+    console.log("LOAD");
     let em = orm.em.fork();
     let characters = await em.findAll(DeltaCharacter);
     let faceSprites: Record<string, FaceSprite[]> = {};

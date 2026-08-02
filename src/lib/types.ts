@@ -15,6 +15,6 @@ export type ClientMessage = {
     id: number,
     body: string,
     faceSprite: FaceSprite,
-    created: Date,
+    created: string | Date,
     user: ClientUser
 }

@@ -5,7 +5,7 @@ import { UserSchema } from "$lib/entities/user.entity";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateJwtToken } from "$lib/tokens";
-import type { RequestEvent } from "../api/$types";
+import type { RequestEvent } from "./$types";
 
 export const actions = {
     default: async (event) => {
